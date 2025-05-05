@@ -1,0 +1,32 @@
+[
+  {
+    "mobile": "5656565656",
+    "transactions": [
+      {
+        "date": "2025-04-01",
+        "amount": 5000,
+        "fund_name": "Alpha Growth Fund"
+      },
+      {
+        "date": "2025-04-10",
+        "amount": 2000,
+        "fund_name": "Beta Income Fund"
+      }
+    ]
+  },
+  {
+    "mobile": "5656565651",
+    "transactions": [
+      {
+        "date": "2025-04-15",
+        "amount": 3500,
+        "fund_name": "Gamma Balanced Fund"
+      },
+      {
+        "date": "2025-04-20",
+        "amount": 1000,
+        "fund_name": "Delta Tax Saver Fund"
+      }
+    ]
+  }
+]
