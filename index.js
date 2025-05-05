@@ -9,6 +9,12 @@ const { WebhookClient } = require('dialogflow-fulfillment');
 const app = express().use(bodyParser.json());
 
 app.post('/webhook', (req, res) => {
+
+    console.log('─── New Webhook Request ───');
+    console.log('Raw body:', JSON.stringify(req.body, null, 2));
+    console.log('Intent displayName:', req.body.queryResult.intent.displayName);
+    console.log('Parameters:', JSON.stringify(req.body.queryResult.parameters));
+
   const agent = new WebhookClient({ request: req, response: res });
 
   function welcome(agent) {
