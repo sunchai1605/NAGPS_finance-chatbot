@@ -8,6 +8,10 @@ const { WebhookClient } = require('dialogflow-fulfillment');
 
 const app = express().use(bodyParser.json());
 
+app.get('/', (req, res) => {
+    res.send('Hello from NAGPS Finance Chatbot Server!');
+  });
+  
 app.post('/webhook', (req, res) => {
 
     console.log('─── New Webhook Request ───');
