@@ -27,32 +27,35 @@ app.post('/webhook', (req, res) => {
   }
   
   function transactionHistory(agent) {
-    const datePeriod = agent.parameters['date-period'];
-    const startDate = new Date(datePeriod.startDate);
-    const endDate = new Date(datePeriod.endDate);
+    try {
+      const datePeriod = agent.parameters['date-period'];
+      const startDate = new Date(datePeriod.startDate);
+      const endDate = new Date(datePeriod.endDate);
   
-    const filePath = path.join(__dirname, 'transactionhistorysample.json');
-    const data = JSON.parse(fs.readFileSync(filePath));
+      const filePath = path.join(__dirname, 'transactionhistorysample.json');
+      const data = JSON.parse(fs.readFileSync(filePath));
   
-    // For now, just pick the first user (you can update this to match mobile number later)
-    const user = data[0];
+      const allTransactions = data.flatMap(entry => entry.transactions);
   
-    const filtered = user.transactions.filter(tx => {
-      const txDate = new Date(tx.date);
-      return txDate >= startDate && txDate <= endDate;
-    });
-  
-    if (filtered.length === 0) {
-      agent.add(`No transactions found between ${startDate.toDateString()} and ${endDate.toDateString()}.`);
-    } else {
-      let response = `Here are your transactions from ${startDate.toDateString()} to ${endDate.toDateString()}:\n`;
-      filtered.forEach(tx => {
-        response += `• ${tx.date}: ₹${tx.amount} - ${tx.fund_name}\n`;
+      const filtered = allTransactions.filter(tx => {
+        const txDate = new Date(tx.date);
+        return txDate >= startDate && txDate <= endDate;
       });
-      agent.add(response);
-    }
-  }
   
+      if (filtered.length === 0) {
+        agent.add({ text: `No transactions found between ${startDate.toDateString()} and ${endDate.toDateString()}.` });
+      } else {
+        let response = `Here are your transactions from ${startDate.toDateString()} to ${endDate.toDateString()}:\n`;
+        filtered.forEach(tx => {
+          response += `• ${tx.date}: ₹${tx.amount} - ${tx.fund_name}\n`;
+        });
+        agent.add({ text: response });
+      }
+    } catch (error) {
+      console.error('Error in transactionHistory:', error);
+      agent.add({ text: 'An error occurred while retrieving your transaction history.' });
+    }
+  }  
 
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
