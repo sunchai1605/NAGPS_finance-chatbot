@@ -34,7 +34,10 @@ app.post('/webhook', (req, res) => {
     const filePath = path.join(__dirname, 'transactionhistorysample.json');
     const data = JSON.parse(fs.readFileSync(filePath));
   
-    const filtered = data.filter(tx => {
+    // For now, just pick the first user (you can update this to match mobile number later)
+    const user = data[0];
+  
+    const filtered = user.transactions.filter(tx => {
       const txDate = new Date(tx.date);
       return txDate >= startDate && txDate <= endDate;
     });
@@ -44,11 +47,12 @@ app.post('/webhook', (req, res) => {
     } else {
       let response = `Here are your transactions from ${startDate.toDateString()} to ${endDate.toDateString()}:\n`;
       filtered.forEach(tx => {
-        response += `• ${tx.date}: ₹${tx.amount} - ${tx.description}\n`;
+        response += `• ${tx.date}: ₹${tx.amount} - ${tx.fund_name}\n`;
       });
       agent.add(response);
     }
   }
+  
 
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
