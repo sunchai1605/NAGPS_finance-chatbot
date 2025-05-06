@@ -35,27 +35,35 @@ app.post('/webhook', (req, res) => {
       const filePath = path.join(__dirname, 'transactionhistorysample.json');
       const data = JSON.parse(fs.readFileSync(filePath));
   
-      const allTransactions = data.flatMap(entry => entry.transactions);
+      // Hardcoded mobile number for now — in real scenario, fetch from user context
+      const userMobile = '5656565656';
+      const userData = data.find(entry => entry.mobile === userMobile);
   
-      const filtered = allTransactions.filter(tx => {
+      if (!userData || !userData.transactions) {
+        agent.add(`No transaction data found for your account.`);
+        return;
+      }
+  
+      const filtered = userData.transactions.filter(tx => {
         const txDate = new Date(tx.date);
         return txDate >= startDate && txDate <= endDate;
       });
   
       if (filtered.length === 0) {
-        agent.add({ text: `No transactions found between ${startDate.toDateString()} and ${endDate.toDateString()}.` });
+        agent.add(`No transactions found between ${startDate.toDateString()} and ${endDate.toDateString()}.`);
       } else {
         let response = `Here are your transactions from ${startDate.toDateString()} to ${endDate.toDateString()}:\n`;
         filtered.forEach(tx => {
           response += `• ${tx.date}: ₹${tx.amount} - ${tx.fund_name}\n`;
         });
-        agent.add({ text: response });
+        agent.add(response);
       }
     } catch (error) {
       console.error('Error in transactionHistory:', error);
-      agent.add({ text: 'An error occurred while retrieving your transaction history.' });
+      agent.add('An error occurred while retrieving your transaction history.');
     }
-  }  
+  }
+  
 
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
