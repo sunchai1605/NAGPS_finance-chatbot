@@ -36,7 +36,7 @@ app.post('/webhook', (req, res) => {
       const data = JSON.parse(fs.readFileSync(filePath));
   
       // Hardcoded mobile number for now — in real scenario, fetch from user context
-      const userMobile = '5656565656';
+      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile;
       const userData = data.find(entry => entry.mobile === userMobile);
   
       if (!userData || !userData.transactions) {
