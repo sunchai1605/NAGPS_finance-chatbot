@@ -106,11 +106,16 @@ app.post('/webhook', (req, res) => {
   }
 
   function exploreFunds(agent) {
-    const fundType = agent.parameters['fund-type']?.toLowerCase();
+    const rawFundType = agent.parameters['fund-type'];
+    console.log('Raw fund-type:', rawFundType);
+
+    const fundType = rawFundType?.toLowerCase?.() || '';
   
     const filePath = path.join(__dirname, 'fund&categorysample.json');
     const data = JSON.parse(fs.readFileSync(filePath));
-  
+    
+    console.log('Fund type parameter:', fundType);
+
     // Find the matching category
     const matchingCategory = data.find(category => category.category.toLowerCase() === fundType);
   
