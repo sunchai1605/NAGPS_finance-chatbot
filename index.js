@@ -48,16 +48,18 @@ app.post('/webhook', (req, res) => {
       const startDate = new Date(datePeriod.startDate);
       const endDate = new Date(datePeriod.endDate);
   
+      // Get mobile from context
       const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
   
       if (!userMobile) {
         agent.add('Could you please share your mobile number to proceed?');
+        // Set a context so that the next response triggers GetMobileNumber
+        agent.context.set({ name: 'ask_mobile', lifespan: 1 });
         return;
       }
   
       const filePath = path.join(__dirname, 'transactionhistorysample.json');
       const data = JSON.parse(fs.readFileSync(filePath));
-  
       const userData = data.find(entry => entry.mobile === userMobile);
   
       if (!userData || !userData.transactions) {
@@ -84,8 +86,6 @@ app.post('/webhook', (req, res) => {
       agent.add('An error occurred while retrieving your transaction history.');
     }
   }
-  
-  
 
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
