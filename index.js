@@ -37,11 +37,16 @@ app.post('/webhook', (req, res) => {
       const startDate = new Date(datePeriod.startDate);
       const endDate = new Date(datePeriod.endDate);
   
+      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+  
+      if (!userMobile) {
+        agent.add('Could you please share your mobile number to proceed?');
+        return;
+      }
+  
       const filePath = path.join(__dirname, 'transactionhistorysample.json');
       const data = JSON.parse(fs.readFileSync(filePath));
   
-      // Hardcoded mobile number for now — in real scenario, fetch from user context
-      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile;
       const userData = data.find(entry => entry.mobile === userMobile);
   
       if (!userData || !userData.transactions) {
@@ -68,6 +73,7 @@ app.post('/webhook', (req, res) => {
       agent.add('An error occurred while retrieving your transaction history.');
     }
   }
+  
   
 
   let intentMap = new Map();
