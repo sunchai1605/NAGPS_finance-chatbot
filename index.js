@@ -107,20 +107,18 @@ app.post('/webhook', (req, res) => {
 
   function exploreFunds(agent) {
     const rawFundType = agent.parameters['fund-type'];
-    console.log('Raw fund-type:', rawFundType);
-
-    const fundType = rawFundType?.toLowerCase?.() || '';
+    console.log('RAW fund-type:', rawFundType);
   
+    const fundType = rawFundType?.toLowerCase?.() || '';
     const filePath = path.join(__dirname, 'fund&categorysample.json');
     const data = JSON.parse(fs.readFileSync(filePath));
-    
-    console.log('Fund type parameter:', fundType);
-
-    // Find the matching category
-    const matchingCategory = data.find(category => category.category.toLowerCase() === fundType);
+  
+    const matchingCategory = data.find(
+      category => category.category.toLowerCase() === fundType
+    );
   
     if (!matchingCategory || !matchingCategory.funds || matchingCategory.funds.length === 0) {
-      agent.add(`Sorry, I couldn't find any ${fundType} funds at the moment.`);
+      agent.add(`Sorry, I couldn't find any "${fundType}" funds at the moment.`);
     } else {
       let response = `Here are some ${fundType} funds:\n`;
       matchingCategory.funds.forEach(fund => {
@@ -128,7 +126,7 @@ app.post('/webhook', (req, res) => {
       });
       agent.add(response);
     }
-  }
+  }  
     
   
 
