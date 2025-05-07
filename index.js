@@ -45,15 +45,19 @@ app.post('/webhook', (req, res) => {
   function transactionHistory(agent) {
     try {
       const datePeriod = agent.parameters['date-period'];
+  
+      if (!datePeriod || !datePeriod.startDate || !datePeriod.endDate) {
+        agent.add('For which date range would you like to view your transactions?');
+        return;
+      }
+  
       const startDate = new Date(datePeriod.startDate);
       const endDate = new Date(datePeriod.endDate);
   
-      // Get mobile from context
       const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
   
       if (!userMobile) {
         agent.add('Could you please share your mobile number to proceed?');
-        // Set a context so that the next response triggers GetMobileNumber
         agent.context.set({ name: 'ask_mobile', lifespan: 1 });
         return;
       }
@@ -86,6 +90,7 @@ app.post('/webhook', (req, res) => {
       agent.add('An error occurred while retrieving your transaction history.');
     }
   }
+  
 
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
