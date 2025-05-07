@@ -25,6 +25,11 @@ app.post('/webhook', (req, res) => {
   function welcome(agent) {
     agent.add(`Welcome to the finance bot!`);
   }
+
+  function getMobileNumber(agent) {
+    const mobile = agent.parameters['mobile'];
+    agent.add(`Thanks! I've saved your mobile number: ${mobile}`);
+  }
   
   function transactionHistory(agent) {
     try {
@@ -68,6 +73,7 @@ app.post('/webhook', (req, res) => {
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
   intentMap.set('TransactionHistory', transactionHistory);
+  intentMap.set('GetMobileNumber', getMobileNumber);
   agent.handleRequest(intentMap);
 });
 
