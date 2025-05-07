@@ -1,0 +1,37 @@
+[
+  {
+    "category": "Equity",
+    "funds": [
+      {
+        "fund_id": "MF001",
+        "fund_name": "Alpha Growth Fund"
+      },
+      {
+        "fund_id": "MF004",
+        "fund_name": "Delta Tax Saver Fund"
+      }
+    ]
+  },
+  {
+    "category": "Debt",
+    "funds": [
+      {
+        "fund_id": "MF002",
+        "fund_name": "Beta Income Fund"
+      },
+      {
+        "fund_id": "MF005",
+        "fund_name": "Omega Liquid Fund"
+      }
+    ]
+  },
+  {
+    "category": "Hybrid",
+    "funds": [
+      {
+        "fund_id": "MF003",
+        "fund_name": "Gamma Balanced Fund"
+      }
+    ]
+  }
+]

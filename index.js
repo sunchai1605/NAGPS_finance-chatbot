@@ -104,12 +104,32 @@ app.post('/webhook', (req, res) => {
       agent.add('An error occurred while retrieving your transaction history.');
     }
   }
+
+  function exploreFunds(agent) {
+    const fundType = agent.parameters['fund-type']?.toLowerCase();
+  
+    const filePath = path.join(__dirname, 'fund&categorysample.json');
+    const data = JSON.parse(fs.readFileSync(filePath));
+  
+    const matchingFunds = data.filter(fund => fund.type.toLowerCase() === fundType);
+  
+    if (matchingFunds.length === 0) {
+      agent.add(`Sorry, I couldn't find any ${fundType} funds at the moment.`);
+    } else {
+      let response = `Here are some ${fundType} fund options:\n`;
+      matchingFunds.forEach(fund => {
+        response += `• ${fund.name} (Risk: ${fund.risk})\n`;
+      });
+      agent.add(response);
+    }
+  }  
   
 
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
   intentMap.set('TransactionHistory', transactionHistory);
   intentMap.set('GetMobileNumber', getMobileNumber);
+  intentMap.set('ExploreFunds', exploreFunds);
   agent.handleRequest(intentMap);
 });
 
