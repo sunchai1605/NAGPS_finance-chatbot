@@ -111,18 +111,20 @@ app.post('/webhook', (req, res) => {
     const filePath = path.join(__dirname, 'fund&categorysample.json');
     const data = JSON.parse(fs.readFileSync(filePath));
   
-    const matchingFunds = data.filter(fund => fund.type.toLowerCase() === fundType);
+    // Find the matching category
+    const matchingCategory = data.find(category => category.category.toLowerCase() === fundType);
   
-    if (matchingFunds.length === 0) {
+    if (!matchingCategory || !matchingCategory.funds || matchingCategory.funds.length === 0) {
       agent.add(`Sorry, I couldn't find any ${fundType} funds at the moment.`);
     } else {
-      let response = `Here are some ${fundType} fund options:\n`;
-      matchingFunds.forEach(fund => {
-        response += `• ${fund.name} (Risk: ${fund.risk})\n`;
+      let response = `Here are some ${fundType} funds:\n`;
+      matchingCategory.funds.forEach(fund => {
+        response += `• ${fund.fund_name} (ID: ${fund.fund_id})\n`;
       });
       agent.add(response);
     }
-  }  
+  }
+    
   
 
   let intentMap = new Map();
