@@ -28,7 +28,18 @@ app.post('/webhook', (req, res) => {
 
   function getMobileNumber(agent) {
     const mobile = agent.parameters['mobile'];
-    agent.add(`Thanks! I've saved your mobile number: ${mobile}`);
+    
+    // Set the context manually
+    agent.context.set({
+      name: 'got_mobile',
+      lifespan: 5,
+      parameters: { mobile: mobile }
+    });
+  
+    agent.add(`Thanks! I've saved your number: ${mobile}`);
+  
+    // Call transactionHistory directly
+    return transactionHistory(agent);
   }
   
   function transactionHistory(agent) {
