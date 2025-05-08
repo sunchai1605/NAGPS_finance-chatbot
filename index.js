@@ -50,7 +50,22 @@ app.post('/webhook', (req, res) => {
    
   function transactionHistory(agent) {
     try {
-      const datePeriod = agent.parameters['date-period'];
+      const datePeriod = agent.parameters['date-period']; // ⬅️ Moved this up first
+  
+      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+  
+      if (!userMobile) {
+        agent.add('Could you please share your mobile number to proceed?');
+  
+        // Save the date-period in context so we can use it later
+        agent.context.set({
+          name: 'ask_mobile',
+          lifespan: 2,
+          parameters: { 'date-period': datePeriod }
+        });
+  
+        return;
+      }
   
       if (!datePeriod || !datePeriod.startDate || !datePeriod.endDate) {
         agent.add('For which date range would you like to view your transactions?');
@@ -59,21 +74,6 @@ app.post('/webhook', (req, res) => {
   
       const startDate = new Date(datePeriod.startDate);
       const endDate = new Date(datePeriod.endDate);
-  
-      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
-  
-      if (!userMobile) {
-        agent.add('Could you please share your mobile number to proceed?');
-      
-        // Save the date-period in context so we can use it after
-        agent.context.set({
-          name: 'ask_mobile',
-          lifespan: 2,
-          parameters: { 'date-period': datePeriod }
-        });
-      
-        return;
-      }
   
       const filePath = path.join(__dirname, 'transactionhistorysample.json');
       const data = JSON.parse(fs.readFileSync(filePath));
@@ -103,6 +103,7 @@ app.post('/webhook', (req, res) => {
       agent.add('An error occurred while retrieving your transaction history.');
     }
   }
+  
 
   function exploreFunds(agent) {
     console.log('All parameters:', agent.parameters);
