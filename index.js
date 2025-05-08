@@ -171,7 +171,7 @@ app.post('/webhook', (req, res) => {
   // ──────────────── INTENT MAP ────────────────
 
   const intentMap = new Map();
-  intentMap.set('Default Welcome Intent', welcome);
+  intentMap.set('WelcomeIntent', welcome);
   intentMap.set('GetMobileNumber', getMobileNumber);
   intentMap.set('TransactionHistory', transactionHistory);
   intentMap.set('PortfolioValuation', portfolioValuation);
