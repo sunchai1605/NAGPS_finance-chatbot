@@ -47,8 +47,7 @@ app.post('/webhook', (req, res) => {
       agent.add(`Thanks! I've saved your number: ${mobile}. You can now ask for your transactions.`);
     }
   }
-  
-  
+   
   function transactionHistory(agent) {
     try {
       const datePeriod = agent.parameters['date-period'];
@@ -128,6 +127,36 @@ app.post('/webhook', (req, res) => {
       agent.add(response);
     }
   }  
+
+  function getLastTransaction(agent) {
+    try {
+      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+  
+      if (!userMobile) {
+        agent.add('Could you please provide your mobile number first?');
+        agent.context.set({ name: 'ask_mobile', lifespan: 1 });
+        return;
+      }
+  
+      const filePath = path.join(__dirname, 'transactionhistorysample.json');
+      const data = JSON.parse(fs.readFileSync(filePath));
+      const userData = data.find(entry => entry.mobile === userMobile);
+  
+      if (!userData || !userData.transactions || userData.transactions.length === 0) {
+        agent.add('No transactions found for your account.');
+        return;
+      }
+  
+      const sorted = userData.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const latest = sorted[0];
+  
+      agent.add(`Your latest transaction was on ${latest.date}: ₹${latest.amount} in ${latest.fund_name}.`);
+    } catch (error) {
+      console.error('Error in getLastTransaction:', error);
+      agent.add('Something went wrong while fetching your last transaction.');
+    }
+  }
+  
     
   
 
@@ -136,6 +165,7 @@ app.post('/webhook', (req, res) => {
   intentMap.set('TransactionHistory', transactionHistory);
   intentMap.set('GetMobileNumber', getMobileNumber);
   intentMap.set('ExploreFunds', exploreFunds);
+  intentMap.set('GetLastTransaction', getLastTransaction);
   agent.handleRequest(intentMap);
 });
 
