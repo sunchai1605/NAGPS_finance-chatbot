@@ -195,50 +195,6 @@ app.post('/webhook', (req, res) => {
     // Set up context to expect number
     agent.context.set({ name: 'ask_mobile', lifespan: 1 });
   }  
-
-  function getFundDetails(agent) {
-    const fundName = agent.parameters['fund-name'];
-  
-    if (!fundName) {
-      agent.add(`Please specify the fund name you'd like more details about.`);
-      return;
-    }
-  
-    const filePath = path.join(__dirname, 'fund_details.json');
-    const data = JSON.parse(fs.readFileSync(filePath));
-  
-    const fund = data.find(f => f.fund_name.toLowerCase() === fundName.toLowerCase());
-  
-    if (!fund) {
-      agent.add(`Sorry, I couldn't find details for "${fundName}". Please check the name and try again.`);
-      return;
-    }
-  
-    let response = `📊 *${fund.fund_name}* Details:\n`;
-    for (const [key, value] of Object.entries(fund.breakdown)) {
-      response += `• ${key}: ${value}%\n`;
-    }
-    response += `\nMore info: ${fund.details_link}`;
-  
-    agent.add(response);
-  }   
-
-  function investInFund(agent) {
-    const amount = agent.parameters['amount'];
-    const fundName = agent.parameters['fund-name'];
-  
-    if (!amount || isNaN(amount)) {
-      agent.add(`Please enter a valid numeric amount.`);
-      return;
-    }
-  
-    if (amount > 50000) {
-      agent.add(`For this demo, investment is limited to ₹50,000. Please enter a smaller amount.`);
-      return;
-    }
-  
-    agent.add(`✅ You've successfully invested ₹${amount} in ${fundName}!\nThis is a demo — no real money was used.`);
-  }
   
   
 
@@ -250,8 +206,6 @@ app.post('/webhook', (req, res) => {
   intentMap.set('GetLastTransaction', getLastTransaction);
   intentMap.set('PortfolioValuation', portfolioValuation);
   intentMap.set('ChangeMobileNumber', changeMobileNumber);
-  intentMap.set('GetFundDetails', getFundDetails);
-  intentMap.set('InvestInFund', investInFund);
   agent.handleRequest(intentMap);
 });
 
