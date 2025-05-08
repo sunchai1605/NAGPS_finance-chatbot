@@ -156,8 +156,34 @@ app.post('/webhook', (req, res) => {
       agent.add('Something went wrong while fetching your last transaction.');
     }
   }
+
+  function portfolioValuation(agent) {
+    try {
+      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
   
-    
+      if (!userMobile) {
+        agent.add('Could you please provide your mobile number first?');
+        agent.context.set({ name: 'ask_mobile', lifespan: 1 });
+        return;
+      }
+  
+      const filePath = path.join(__dirname, 'transactionhistorysample.json');
+      const data = JSON.parse(fs.readFileSync(filePath));
+      const userData = data.find(entry => entry.mobile === userMobile);
+  
+      if (!userData || !userData.transactions || userData.transactions.length === 0) {
+        agent.add('No transactions found for your account.');
+        return;
+      }
+  
+      const totalValue = userData.transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  
+      agent.add(`Your current portfolio valuation is ₹${totalValue}.`);
+    } catch (error) {
+      console.error('Error in portfolioValuation:', error);
+      agent.add('Sorry, something went wrong while calculating your portfolio value.');
+    }
+  }
   
 
   let intentMap = new Map();
@@ -166,6 +192,7 @@ app.post('/webhook', (req, res) => {
   intentMap.set('GetMobileNumber', getMobileNumber);
   intentMap.set('ExploreFunds', exploreFunds);
   intentMap.set('GetLastTransaction', getLastTransaction);
+  intentMap.set('PortfolioValuation', portfolioValuation);
   agent.handleRequest(intentMap);
 });
 
