@@ -29,24 +29,25 @@ app.post('/webhook', (req, res) => {
   function getMobileNumber(agent) {
     const mobile = agent.parameters['mobile'];
   
-    // Save it into the got_mobile context
     agent.context.set({
       name: 'got_mobile',
       lifespan: 5,
       parameters: { mobile: mobile }
     });
   
-    // Try to extract any previously provided date-period
-    const datePeriod = agent.context.get('ask_mobile')?.parameters?.['date-period'];
+    // Get any saved date-period from context
+    const askMobileContext = agent.context.get('ask_mobile');
+    const datePeriod = askMobileContext?.parameters?.['date-period'];
   
     if (datePeriod && datePeriod.startDate && datePeriod.endDate) {
-      // Re-run the transactionHistory logic with both values
-      agent.parameters['date-period'] = datePeriod;
-      return transactionHistory(agent);
-    } else {
-      agent.add(`Thanks! I've saved your number: ${mobile}. You can now ask for your transactions.`);
+      console.log('Triggering transactionHistory immediately after mobile number...');
+      agent.parameters['date-period'] = datePeriod; // Inject for reuse
+      return transactionHistory(agent); // Call the function
     }
+  
+    agent.add(`Thanks! I've saved your number: ${mobile}. You can now ask for your transactions.`);
   }
+  
    
   function transactionHistory(agent) {
     try {
