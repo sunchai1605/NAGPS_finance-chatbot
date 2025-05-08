@@ -184,6 +184,17 @@ app.post('/webhook', (req, res) => {
       agent.add('Sorry, something went wrong while calculating your portfolio value.');
     }
   }
+
+  function changeMobileNumber(agent) {
+    // Clear existing context
+    agent.context.set({ name: 'got_mobile', lifespan: 0 });
+  
+    // Prompt for new mobile number
+    agent.add('Sure, please provide your new mobile number.');
+    
+    // Set up context to expect number
+    agent.context.set({ name: 'ask_mobile', lifespan: 1 });
+  }  
   
 
   let intentMap = new Map();
@@ -193,6 +204,7 @@ app.post('/webhook', (req, res) => {
   intentMap.set('ExploreFunds', exploreFunds);
   intentMap.set('GetLastTransaction', getLastTransaction);
   intentMap.set('PortfolioValuation', portfolioValuation);
+  intentMap.set('ChangeMobileNumber', changeMobileNumber);
   agent.handleRequest(intentMap);
 });
 
