@@ -199,13 +199,18 @@ app.post('/webhook', (req, res) => {
   function getFundDetails(agent) {
     const fundName = agent.parameters['fund-name'];
   
+    if (!fundName) {
+      agent.add(`Please specify the fund name you'd like more details about.`);
+      return;
+    }
+  
     const filePath = path.join(__dirname, 'fund_details.json');
     const data = JSON.parse(fs.readFileSync(filePath));
   
     const fund = data.find(f => f.fund_name.toLowerCase() === fundName.toLowerCase());
   
     if (!fund) {
-      agent.add(`Sorry, I couldn't find details for ${fundName}.`);
+      agent.add(`Sorry, I couldn't find details for "${fundName}". Please check the name and try again.`);
       return;
     }
   
@@ -216,7 +221,7 @@ app.post('/webhook', (req, res) => {
     response += `\nMore info: ${fund.details_link}`;
   
     agent.add(response);
-  }  
+  }   
 
   function investInFund(agent) {
     const amount = agent.parameters['amount'];
