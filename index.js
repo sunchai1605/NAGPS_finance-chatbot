@@ -234,29 +234,33 @@ app.post('/webhook', (req, res) => {
 
   function investInFund(agent) {
     const amount = agent.parameters['amount'];
-    const rawFundName = agent.parameters['fund-name'];
+    const fundNameRaw = agent.parameters['fund-name'];
   
-    // Normalize input to lowercase
-    const fundName = Array.isArray(rawFundName)
-      ? rawFundName[0].toLowerCase()
-      : rawFundName?.toLowerCase?.();
+    // Normalize fund name (support array or string)
+    const fundName = Array.isArray(fundNameRaw)
+      ? fundNameRaw[0]?.toLowerCase()?.trim()
+      : fundNameRaw?.toLowerCase?.()?.trim();
+  
+    console.log('💰 Amount:', amount);
+    console.log('📌 Fund Name:', fundName);
   
     if (!fundName || !amount) {
-      agent.add(`Sorry, I couldn't process your investment request. Please mention both the fund name and the amount.`);
+      agent.add(`Sorry, I couldn't process your investment request. Please specify both the fund name and the amount.`);
       return;
     }
   
-    const fundFilePath = path.join(__dirname, 'fund_details.json');
-    const fundData = JSON.parse(fs.readFileSync(fundFilePath));
+    const filePath = path.join(__dirname, 'fund_details.json');
+    const fundData = JSON.parse(fs.readFileSync(filePath));
   
     const matchedFund = fundData.find(f => f.fund_name.toLowerCase() === fundName);
   
     if (!matchedFund) {
-      agent.add(`Sorry, I couldn't find the fund "${fundName}". Please check the name and try again.`);
+      agent.add(`Sorry, I couldn't find the fund "${fundName}". Please check the name or try a different one.`);
     } else {
-      agent.add(`Great! You’ve successfully invested ₹${amount} in ${matchedFund.fund_name}. This is just a simulation.`);
+      agent.add(`✅ Great! You've successfully simulated an investment of ₹${amount} in ${matchedFund.fund_name}.`);
     }
   }
+  
   
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
