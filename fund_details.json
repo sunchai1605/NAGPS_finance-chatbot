@@ -1,0 +1,64 @@
+[
+    {
+      "category": "Equity",
+      "funds": [
+        {
+          "fund_id": "MF001",
+          "fund_name": "Alpha Growth Fund",
+          "breakdown": {
+            "Large Cap": 50,
+            "Mid Cap": 30,
+            "Small Cap": 20
+          },
+          "details_link": "https://example.com/fund/alpha-growth"
+        },
+        {
+          "fund_id": "MF004",
+          "fund_name": "Delta Tax Saver Fund",
+          "breakdown": {
+            "Tax Saver": 60,
+            "ELSS": 40
+          },
+          "details_link": "https://example.com/fund/delta-tax-saver"
+        }
+      ]
+    },
+    {
+      "category": "Debt",
+      "funds": [
+        {
+          "fund_id": "MF002",
+          "fund_name": "Beta Income Fund",
+          "breakdown": {
+            "Corporate Bonds": 70,
+            "Govt Securities": 30
+          },
+          "details_link": "https://example.com/fund/beta-income"
+        },
+        {
+          "fund_id": "MF005",
+          "fund_name": "Omega Liquid Fund",
+          "breakdown": {
+            "Liquid Assets": 80,
+            "Short-Term Debt": 20
+          },
+          "details_link": "https://example.com/fund/omega-liquid"
+        }
+      ]
+    },
+    {
+      "category": "Hybrid",
+      "funds": [
+        {
+          "fund_id": "MF003",
+          "fund_name": "Gamma Balanced Fund",
+          "breakdown": {
+            "Equity": 60,
+            "Debt": 40
+          },
+          "details_link": "https://example.com/fund/gamma-balanced"
+        }
+      ]
+    }
+  ]
+  
