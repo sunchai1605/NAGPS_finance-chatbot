@@ -233,33 +233,47 @@ app.post('/webhook', (req, res) => {
   }
 
   function investInFund(agent) {
-    const amount = agent.parameters['amount'];
-    const fundNameRaw = agent.parameters['fund-name'];
+    try {
+      const amount = agent.parameters['amount'];
+      let fundNameRaw = agent.parameters['fund-name'];
   
-    // Normalize fund name (support array or string)
-    const fundName = Array.isArray(fundNameRaw)
-      ? fundNameRaw[0]?.toLowerCase()?.trim()
-      : fundNameRaw?.toLowerCase?.()?.trim();
+      // Normalize fund name
+      const fundName = Array.isArray(fundNameRaw) ? fundNameRaw[0] : fundNameRaw;
+      const normalizedFund = fundName?.trim()?.toLowerCase();
   
-    console.log('💰 Amount:', amount);
-    console.log('📌 Fund Name:', fundName);
+      if (!amount || !normalizedFund) {
+        agent.add("Please specify both the fund name and the amount you'd like to invest.");
+        return;
+      }
   
-    if (!fundName || !amount) {
-      agent.add(`Sorry, I couldn't process your investment request. Please specify both the fund name and the amount.`);
-      return;
-    }
+      // Safety check for large investments
+      if (amount > 50000) {
+        agent.add(`Investments above ₹50,000 require additional verification. Please contact our support team.`);
+        return;
+      }
   
-    const filePath = path.join(__dirname, 'fund_details.json');
-    const fundData = JSON.parse(fs.readFileSync(filePath));
+      const filePath = path.join(__dirname, 'fund_details.json');
+      const fundData = JSON.parse(fs.readFileSync(filePath));
   
-    const matchedFund = fundData.find(f => f.fund_name.toLowerCase() === fundName);
+      const matchedFund = fundData.find(f =>
+        f.fund_name.toLowerCase() === normalizedFund
+      );
   
-    if (!matchedFund) {
-      agent.add(`Sorry, I couldn't find the fund "${fundName}". Please check the name or try a different one.`);
-    } else {
-      agent.add(`✅ Great! You've successfully simulated an investment of ₹${amount} in ${matchedFund.fund_name}.`);
+      if (!matchedFund) {
+        agent.add(`I couldn't find the fund "${fundName}". Please check the name or try another.`);
+        return;
+      }
+  
+      agent.add(`✅ Successfully simulated an investment of ₹${amount} in ${matchedFund.fund_name}.\n` +
+                `Fund Objective: ${matchedFund.description}\n` +
+                `NAV: ₹${matchedFund.nav}\n` +
+                `Category: ${matchedFund.category}`);
+    } catch (error) {
+      console.error('❌ Error in investInFund:', error);
+      agent.add('Something went wrong while processing your investment. Please try again later.');
     }
   }
+  
   
   
   let intentMap = new Map();
