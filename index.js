@@ -234,47 +234,30 @@ app.post('/webhook', (req, res) => {
 
   function investInFund(agent) {
     const amount = agent.parameters['amount'];
-    const fundNameRaw = agent.parameters['fund-name'];
-    const fundName = fundNameRaw?.trim();
+    const rawFundName = agent.parameters['fund-name'];
   
-    console.log('💬 Full parameters:', agent.parameters);
-    console.log('🪙 Invest amount:', amount);
-    console.log('📄 Fund name:', fundName);
+    // Normalize input to lowercase
+    const fundName = Array.isArray(rawFundName)
+      ? rawFundName[0].toLowerCase()
+      : rawFundName?.toLowerCase?.();
   
-    // Handle missing or invalid amount
-    if (!amount || isNaN(amount)) {
-      agent.add(`Please enter a valid amount you'd like to invest.`);
+    if (!fundName || !amount) {
+      agent.add(`Sorry, I couldn't process your investment request. Please mention both the fund name and the amount.`);
       return;
     }
   
-    if (amount > 50000) {
-      agent.add(`For demo purposes, investments are limited to ₹50,000.`);
-      return;
-    }
+    const fundFilePath = path.join(__dirname, 'fund_details.json');
+    const fundData = JSON.parse(fs.readFileSync(fundFilePath));
   
-    // Handle missing fund name
-    if (!fundName) {
-      agent.add(`Please tell me which fund you want to invest in, like "Alpha Growth Fund".`);
-      return;
-    }
-  
-    // Normalize casing
-    const filePath = path.join(__dirname, 'fund&categorysample.json');
-    const data = JSON.parse(fs.readFileSync(filePath));
-    const allFunds = data.flatMap(c => c.funds);
-  
-    const matchedFund = allFunds.find(f => f.fund_name.toLowerCase() === fundName.toLowerCase());
+    const matchedFund = fundData.find(f => f.fund_name.toLowerCase() === fundName);
   
     if (!matchedFund) {
-      agent.add(`Sorry, I couldn't find a fund named "${fundName}". Please try again with a valid fund.`);
-      return;
+      agent.add(`Sorry, I couldn't find the fund "${fundName}". Please check the name and try again.`);
+    } else {
+      agent.add(`Great! You’ve successfully invested ₹${amount} in ${matchedFund.fund_name}. This is just a simulation.`);
     }
-  
-    // Simulate investment success
-    agent.add(`✅ You've successfully invested ₹${amount} in ${matchedFund.fund_name}.\n(This is a demo — no real money was used.)`);
   }
   
-
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
   intentMap.set('TransactionHistory', transactionHistory);
