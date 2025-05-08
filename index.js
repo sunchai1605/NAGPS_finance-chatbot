@@ -23,16 +23,21 @@ app.post('/webhook', (req, res) => {
   function getMobileNumber(agent) {
     const mobile = agent.parameters['mobile'];
     agent.context.set({ name: 'got_mobile', lifespan: 5, parameters: { mobile } });
-
+  
     const askContext = agent.context.get('ask_mobile');
+    const intentToResume = askContext?.parameters?.resume_intent;
     const datePeriod = askContext?.parameters?.['date-period'];
-    if (datePeriod?.startDate && datePeriod?.endDate) {
+  
+    if (intentToResume === 'PortfolioValuation') {
+      return portfolioValuation(agent);
+    } else if (intentToResume === 'TransactionHistory' && datePeriod?.startDate && datePeriod?.endDate) {
       agent.parameters['date-period'] = datePeriod;
       return transactionHistory(agent);
     }
-
+  
     agent.add(`Thanks! I've saved your number: ${mobile}. How can I help you next?`);
   }
+  
 
   function transactionHistory(agent) {
     const datePeriod = agent.parameters['date-period'];
@@ -78,25 +83,30 @@ app.post('/webhook', (req, res) => {
 
   function portfolioValuation(agent) {
     const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
-
+  
     if (!userMobile) {
-      agent.context.set({ name: 'ask_mobile', lifespan: 2 });
+      agent.context.set({
+        name: 'ask_mobile',
+        lifespan: 2,
+        parameters: { resume_intent: 'PortfolioValuation' }
+      });
       agent.add("Please share your mobile number to get your portfolio details.");
       return;
     }
-
+  
     const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'transactionhistorysample.json')));
     const userData = data.find(u => u.mobile === userMobile);
-
+  
     if (!userData) {
       agent.add("No account found for your mobile number.");
       return;
     }
-
+  
     const total = userData.transactions.reduce((sum, tx) => sum + tx.amount, 0);
-    agent.add(`Your total portfolio valuation is ₹${total}.`);
+    agent.add(`💼 Your total portfolio valuation is ₹${total}.`);
     agent.add("Let us know if you'd like to explore funds or invest further.");
   }
+  
 
   function exploreFunds(agent) {
     const type = agent.parameters['fund-category']?.toLowerCase();
