@@ -28,37 +28,46 @@ app.post('/webhook', (req, res) => {
 
   function getMobileNumber(agent) {
     const mobile = agent.parameters['mobile'];
+    console.log('📲 Received mobile:', mobile);
   
+    // Set got_mobile context
     agent.context.set({
       name: 'got_mobile',
       lifespan: 5,
       parameters: { mobile: mobile }
     });
   
-    // Get any saved date-period from context
+    // Get saved date-period from ask_mobile context
     const askMobileContext = agent.context.get('ask_mobile');
+    console.log('📁 ask_mobile context:', askMobileContext);
+  
     const datePeriod = askMobileContext?.parameters?.['date-period'];
+    console.log('📅 Retrieved datePeriod:', datePeriod);
   
     if (datePeriod && datePeriod.startDate && datePeriod.endDate) {
-      console.log('Triggering transactionHistory immediately after mobile number...');
-      agent.parameters['date-period'] = datePeriod; // Inject for reuse
-      return transactionHistory(agent); // Call the function
+      console.log('🚀 Calling transactionHistory immediately after mobile...');
+      agent.parameters['date-period'] = datePeriod; // Inject into parameters
+      return transactionHistory(agent); // Run the full flow
     }
   
     agent.add(`Thanks! I've saved your number: ${mobile}. You can now ask for your transactions.`);
   }
   
+  
    
   function transactionHistory(agent) {
     try {
-      const datePeriod = agent.parameters['date-period']; // ⬅️ Moved this up first
+      console.log('📥 Entered transactionHistory');
+  
+      const datePeriod = agent.parameters['date-period'];
+      console.log('📅 Received datePeriod:', datePeriod);
   
       const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+      console.log('📲 Using mobile:', userMobile);
   
       if (!userMobile) {
         agent.add('Could you please share your mobile number to proceed?');
   
-        // Save the date-period in context so we can use it later
         agent.context.set({
           name: 'ask_mobile',
           lifespan: 2,
@@ -100,10 +109,11 @@ app.post('/webhook', (req, res) => {
         agent.add(response);
       }
     } catch (error) {
-      console.error('Error in transactionHistory:', error);
+      console.error('❌ Error in transactionHistory:', error);
       agent.add('An error occurred while retrieving your transaction history.');
     }
   }
+  
   
 
   function exploreFunds(agent) {
