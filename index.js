@@ -1,8 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const transactionsData = JSON.parse(
-  fs.readFileSync('transactionhistorysample.json', 'utf8')
-);
 const express = require('express');
 const bodyParser = require('body-parser');
 const { WebhookClient } = require('dialogflow-fulfillment');
@@ -10,284 +7,180 @@ const { WebhookClient } = require('dialogflow-fulfillment');
 const app = express().use(bodyParser.json());
 
 app.get('/', (req, res) => {
-    res.send('Hello from NAGPS Finance Chatbot Server!');
-  });
+  res.send('Hello from ABC Mutual Fund Bot!');
+});
 
 app.post('/webhook', (req, res) => {
-
-    console.log('─── New Webhook Request ───');
-    console.log('Raw body:', JSON.stringify(req.body, null, 2));
-    console.log('Intent displayName:', req.body.queryResult.intent.displayName);
-    console.log('Parameters:', JSON.stringify(req.body.queryResult.parameters));
-
   const agent = new WebhookClient({ request: req, response: res });
 
+  // ──────────────── INTENT HANDLERS ────────────────
+
   function welcome(agent) {
-    agent.add(`Welcome to the finance bot!`);
+    agent.add("Hi, welcome to ABC Mutual Fund Services. What service would you like to use?");
+    agent.add("Quick Suggestions:\n- Portfolio Valuation\n- Explore Funds\n- Transaction History");
   }
 
   function getMobileNumber(agent) {
     const mobile = agent.parameters['mobile'];
-    console.log('📲 Received mobile:', mobile);
-  
-    // Set got_mobile context
-    agent.context.set({
-      name: 'got_mobile',
-      lifespan: 5,
-      parameters: { mobile: mobile }
-    });
-  
-    // Get saved date-period from ask_mobile context
-    const askMobileContext = agent.context.get('ask_mobile');
-    console.log('📁 ask_mobile context:', askMobileContext);
-  
-    const datePeriod = askMobileContext?.parameters?.['date-period'];
-    console.log('📅 Retrieved datePeriod:', datePeriod);
-  
-    if (datePeriod && datePeriod.startDate && datePeriod.endDate) {
-      console.log('🚀 Calling transactionHistory immediately after mobile...');
-      agent.parameters['date-period'] = datePeriod; // Inject into parameters
-      return transactionHistory(agent); // Run the full flow
-    }
-  
-    agent.add(`Thanks! I've saved your number: ${mobile}. You can now ask for your transactions.`);
-  }
-  
-  
-   
-  function transactionHistory(agent) {
-    try {
-      console.log('📥 Entered transactionHistory');
-  
-      const datePeriod = agent.parameters['date-period'];
-      console.log('📅 Received datePeriod:', datePeriod);
-  
-      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
-      console.log('📲 Using mobile:', userMobile);
-  
-      if (!userMobile) {
-        agent.add('Could you please share your mobile number to proceed?');
-  
-        agent.context.set({
-          name: 'ask_mobile',
-          lifespan: 2,
-          parameters: { 'date-period': datePeriod }
-        });
-  
-        return;
-      }
-  
-      if (!datePeriod || !datePeriod.startDate || !datePeriod.endDate) {
-        agent.add('For which date range would you like to view your transactions?');
-        return;
-      }
-  
-      const startDate = new Date(datePeriod.startDate);
-      const endDate = new Date(datePeriod.endDate);
-  
-      const filePath = path.join(__dirname, 'transactionhistorysample.json');
-      const data = JSON.parse(fs.readFileSync(filePath));
-      const userData = data.find(entry => entry.mobile === userMobile);
-  
-      if (!userData || !userData.transactions) {
-        agent.add(`No transaction data found for your account.`);
-        return;
-      }
-  
-      const filtered = userData.transactions.filter(tx => {
-        const txDate = new Date(tx.date);
-        return txDate >= startDate && txDate <= endDate;
-      });
-  
-      if (filtered.length === 0) {
-        agent.add(`No transactions found between ${startDate.toDateString()} and ${endDate.toDateString()}.`);
-      } else {
-        let response = `Here are your transactions from ${startDate.toDateString()} to ${endDate.toDateString()}:\n`;
-        filtered.forEach(tx => {
-          response += `• ${tx.date}: ₹${tx.amount} - ${tx.fund_name}\n`;
-        });
-        agent.add(response);
-      }
-    } catch (error) {
-      console.error('❌ Error in transactionHistory:', error);
-      agent.add('An error occurred while retrieving your transaction history.');
-    }
-  }
-  
-  
+    agent.context.set({ name: 'got_mobile', lifespan: 5, parameters: { mobile } });
 
-  function exploreFunds(agent) {
-    const rawFundType = agent.parameters['fund-category'];
-    console.log('🔍 Exploring fund type:', rawFundType);
-  
-    const fundType = rawFundType?.toLowerCase?.() || '';
-    const filePath = path.join(__dirname, 'fund&categorysample.json');
-    const data = JSON.parse(fs.readFileSync(filePath));
-  
-    const match = data.find(cat => cat.category.toLowerCase() === fundType);
-  
-    if (!match || !match.funds || match.funds.length === 0) {
-      agent.add(`Sorry, I couldn't find any ${fundType} funds at the moment.`);
+    const askContext = agent.context.get('ask_mobile');
+    const datePeriod = askContext?.parameters?.['date-period'];
+    if (datePeriod?.startDate && datePeriod?.endDate) {
+      agent.parameters['date-period'] = datePeriod;
+      return transactionHistory(agent);
+    }
+
+    agent.add(`Thanks! I've saved your number: ${mobile}. How can I help you next?`);
+  }
+
+  function transactionHistory(agent) {
+    const datePeriod = agent.parameters['date-period'];
+    const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+
+    if (!userMobile) {
+      agent.context.set({ name: 'ask_mobile', lifespan: 2, parameters: { 'date-period': datePeriod } });
+      agent.add("Could you please share your mobile number to continue?");
+      return;
+    }
+
+    if (!datePeriod?.startDate || !datePeriod?.endDate) {
+      agent.add("Please provide the date range for the transactions.");
+      return;
+    }
+
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'transactionhistorysample.json')));
+    const userData = data.find(u => u.mobile === userMobile);
+
+    if (!userData) {
+      agent.add("No account found for this mobile number.");
+      return;
+    }
+
+    const startDate = new Date(datePeriod.startDate);
+    const endDate = new Date(datePeriod.endDate);
+    const filtered = userData.transactions.filter(tx => {
+      const txDate = new Date(tx.date);
+      return txDate >= startDate && txDate <= endDate;
+    });
+
+    if (filtered.length === 0) {
+      agent.add("No transactions found in the given date range.");
     } else {
-      let response = `Here are some ${fundType} funds:\n`;
-      match.funds.forEach(fund => {
-        response += `• ${fund.fund_name} (ID: ${fund.fund_id})\n`;
+      let response = `Here are your transactions:\n`;
+      filtered.forEach(tx => {
+        response += `• ${tx.date}: ₹${tx.amount} - ${tx.fund_name}\n`;
       });
       agent.add(response);
-    }
-  }
-  
-
-  function getLastTransaction(agent) {
-    try {
-      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
-  
-      if (!userMobile) {
-        agent.add('Could you please provide your mobile number first?');
-        agent.context.set({ name: 'ask_mobile', lifespan: 1 });
-        return;
-      }
-  
-      const filePath = path.join(__dirname, 'transactionhistorysample.json');
-      const data = JSON.parse(fs.readFileSync(filePath));
-      const userData = data.find(entry => entry.mobile === userMobile);
-  
-      if (!userData || !userData.transactions || userData.transactions.length === 0) {
-        agent.add('No transactions found for your account.');
-        return;
-      }
-  
-      const sorted = userData.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-      const latest = sorted[0];
-  
-      agent.add(`Your latest transaction was on ${latest.date}: ₹${latest.amount} in ${latest.fund_name}.`);
-    } catch (error) {
-      console.error('Error in getLastTransaction:', error);
-      agent.add('Something went wrong while fetching your last transaction.');
+      agent.add("Would you like to invest more in any of these funds?");
     }
   }
 
   function portfolioValuation(agent) {
-    try {
-      const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
-  
-      if (!userMobile) {
-        agent.add('Could you please provide your mobile number first?');
-        agent.context.set({ name: 'ask_mobile', lifespan: 1 });
-        return;
-      }
-  
-      const filePath = path.join(__dirname, 'transactionhistorysample.json');
-      const data = JSON.parse(fs.readFileSync(filePath));
-      const userData = data.find(entry => entry.mobile === userMobile);
-  
-      if (!userData || !userData.transactions || userData.transactions.length === 0) {
-        agent.add('No transactions found for your account.');
-        return;
-      }
-  
-      const totalValue = userData.transactions.reduce((sum, tx) => sum + tx.amount, 0);
-  
-      agent.add(`Your current portfolio valuation is ₹${totalValue}.`);
-    } catch (error) {
-      console.error('Error in portfolioValuation:', error);
-      agent.add('Sorry, something went wrong while calculating your portfolio value.');
+    const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+
+    if (!userMobile) {
+      agent.context.set({ name: 'ask_mobile', lifespan: 2 });
+      agent.add("Please share your mobile number to get your portfolio details.");
+      return;
     }
+
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'transactionhistorysample.json')));
+    const userData = data.find(u => u.mobile === userMobile);
+
+    if (!userData) {
+      agent.add("No account found for your mobile number.");
+      return;
+    }
+
+    const total = userData.transactions.reduce((sum, tx) => sum + tx.amount, 0);
+    agent.add(`Your total portfolio valuation is ₹${total}.`);
+    agent.add("Let us know if you'd like to explore funds or invest further.");
   }
 
-  function changeMobileNumber(agent) {
-    // Clear existing context
-    agent.context.set({ name: 'got_mobile', lifespan: 0 });
-  
-    // Prompt for new mobile number
-    agent.add('Sure, please provide your new mobile number.');
-    
-    // Set up context to expect number
-    agent.context.set({ name: 'ask_mobile', lifespan: 1 });
-  } 
-  
+  function exploreFunds(agent) {
+    const type = agent.parameters['fund-category']?.toLowerCase();
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fund&categorysample.json')));
+    const match = data.find(f => f.category.toLowerCase() === type);
+
+    if (!match) {
+      agent.add(`Sorry, I couldn't find any "${type}" funds.`);
+      return;
+    }
+
+    let response = `Here are some ${type} funds:\n`;
+    match.funds.forEach(f => {
+      response += `• ${f.fund_name} (ID: ${f.fund_id})\n`;
+    });
+    agent.add(response);
+    agent.add("Would you like to view fund details or invest in one?");
+  }
+
   function getFundDetails(agent) {
     const fundName = agent.parameters['fund-name'];
-  
-    if (!fundName) {
-      agent.add('Please tell me which fund you want details for.');
-      return;
-    }
-  
-    const filePath = path.join(__dirname, 'fund_details.json');
-    const data = JSON.parse(fs.readFileSync(filePath));
-    const fund = data.find(f => f.fund_name.toLowerCase() === fundName.toLowerCase());
-  
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fund_details.json')));
+    const fund = data.find(f => f.fund_name.toLowerCase() === fundName?.toLowerCase());
+
     if (!fund) {
-      agent.add(`Sorry, I couldn't find details for ${fundName}.`);
+      agent.add(`No details found for fund: ${fundName}`);
       return;
     }
-  
-    let response = `📊 *${fund.fund_name}* Details:\n`;
-    for (const [key, value] of Object.entries(fund.breakdown)) {
-      response += `• ${key}: ${value}%\n`;
+
+    let response = `📊 *${fund.fund_name}* Breakdown:\n`;
+    for (const [k, v] of Object.entries(fund.breakdown)) {
+      response += `• ${k}: ${v}%\n`;
     }
-    response += `\nMore info: ${fund.details_link}`;
-  
+    response += `\n🔗 More info: ${fund.details_link}`;
     agent.add(response);
   }
 
   function investInFund(agent) {
-    try {
-      const amount = agent.parameters['amount'];
-      let fundNameRaw = agent.parameters['fund-name'];
-  
-      // Normalize fund name
-      const fundName = Array.isArray(fundNameRaw) ? fundNameRaw[0] : fundNameRaw;
-      const normalizedFund = fundName?.trim()?.toLowerCase();
-  
-      if (!amount || !normalizedFund) {
-        agent.add("Please specify both the fund name and the amount you'd like to invest.");
-        return;
-      }
-  
-      // Safety check for large investments
-      if (amount > 50000) {
-        agent.add(`Investments above ₹50,000 require additional verification. Please contact our support team.`);
-        return;
-      }
-  
-      const filePath = path.join(__dirname, 'fund_details.json');
-      const fundData = JSON.parse(fs.readFileSync(filePath));
-  
-      const matchedFund = fundData.find(f =>
-        f.fund_name.toLowerCase() === normalizedFund
-      );
-  
-      if (!matchedFund) {
-        agent.add(`I couldn't find the fund "${fundName}". Please check the name or try another.`);
-        return;
-      }
-  
-      agent.add(`✅ Successfully simulated an investment of ₹${amount} in ${matchedFund.fund_name}.\n` +
-                `Fund Objective: ${matchedFund.description}\n` +
-                `NAV: ₹${matchedFund.nav}\n` +
-                `Category: ${matchedFund.category}`);
-    } catch (error) {
-      console.error('❌ Error in investInFund:', error);
-      agent.add('Something went wrong while processing your investment. Please try again later.');
+    const amount = agent.parameters['amount'];
+    const fundRaw = agent.parameters['fund-name'];
+    const fundName = Array.isArray(fundRaw) ? fundRaw[0] : fundRaw;
+    const normalizedFund = fundName?.trim()?.toLowerCase();
+
+    if (!normalizedFund || !amount) {
+      agent.add("Please mention both the fund name and the amount you'd like to invest.");
+      return;
     }
+
+    if (amount > 50000) {
+      agent.add("For demo, investments above ₹50,000 require verification. Contact support.");
+      return;
+    }
+
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fund_details.json')));
+    const matched = data.find(f => f.fund_name.toLowerCase() === normalizedFund);
+
+    if (!matched) {
+      agent.add(`Sorry, no fund found with name "${fundName}".`);
+      return;
+    }
+
+    agent.add(`✅ Successfully simulated an investment of ₹${amount} in ${matched.fund_name}.`);
+    agent.add("Would you like to do anything else? You can explore funds or check transactions.");
   }
-  
-  
-  
-  let intentMap = new Map();
+
+  function changeMobileNumber(agent) {
+    agent.context.set({ name: 'got_mobile', lifespan: 0 });
+    agent.context.set({ name: 'ask_mobile', lifespan: 2 });
+    agent.add("Sure, please provide your new mobile number.");
+  }
+
+  // ──────────────── INTENT MAP ────────────────
+
+  const intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
-  intentMap.set('TransactionHistory', transactionHistory);
   intentMap.set('GetMobileNumber', getMobileNumber);
-  intentMap.set('ExploreFunds', exploreFunds);
-  intentMap.set('GetLastTransaction', getLastTransaction);
+  intentMap.set('TransactionHistory', transactionHistory);
   intentMap.set('PortfolioValuation', portfolioValuation);
-  intentMap.set('ChangeMobileNumber', changeMobileNumber);
+  intentMap.set('ExploreFunds', exploreFunds);
   intentMap.set('GetFundDetails', getFundDetails);
   intentMap.set('InvestInFund', investInFund);
+  intentMap.set('ChangeMobileNumber', changeMobileNumber);
+
   agent.handleRequest(intentMap);
-  console.log('✅ Response sent to Dialogflow');
 });
 
-app.listen(3000, () => console.log('Server is running on port 3000'));
+app.listen(3000, () => console.log("🚀 Server is running on port 3000"));
