@@ -107,7 +107,7 @@ app.post('/webhook', (req, res) => {
 
   function exploreFunds(agent) {
     console.log('All parameters:', agent.parameters);
-    const rawFundType = agent.parameters['fund-type'];
+    const rawFundType = agent.parameters['fund-category'];
     console.log('RAW fund-type:', rawFundType);
   
     const fundType = rawFundType?.toLowerCase?.() || '';
