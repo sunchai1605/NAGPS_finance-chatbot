@@ -219,6 +219,7 @@ app.post('/webhook', (req, res) => {
   intentMap.set('PortfolioValuation', portfolioValuation);
   intentMap.set('ChangeMobileNumber', changeMobileNumber);
   agent.handleRequest(intentMap);
+  console.log('✅ Response sent to Dialogflow');
 });
 
 app.listen(3000, () => console.log('Server is running on port 3000'));
