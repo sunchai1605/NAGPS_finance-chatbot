@@ -1,0 +1,44 @@
+[
+    {
+      "fund_name": "Alpha Growth Fund",
+      "breakdown": {
+        "Large Cap": 50,
+        "Mid Cap": 30,
+        "Small Cap": 20
+      },
+      "details_link": "https://example.com/fund/alpha-growth"
+    },
+    {
+      "fund_name": "Beta Income Fund",
+      "breakdown": {
+        "Government Bonds": 60,
+        "Corporate Bonds": 40
+      },
+      "details_link": "https://example.com/fund/beta-income"
+    },
+    {
+      "fund_name": "Gamma Balanced Fund",
+      "breakdown": {
+        "Equity": 50,
+        "Debt": 50
+      },
+      "details_link": "https://example.com/fund/gamma-balanced"
+    },
+    {
+      "fund_name": "Delta Tax Saver Fund",
+      "breakdown": {
+        "Equity": 70,
+        "ELSS": 30
+      },
+      "details_link": "https://example.com/fund/delta-tax-saver"
+    },
+    {
+      "fund_name": "Omega Liquid Fund",
+      "breakdown": {
+        "Treasury Bills": 80,
+        "Short-Term Debt": 20
+      },
+      "details_link": "https://example.com/fund/omega-liquid"
+    }
+  ]
+  

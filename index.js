@@ -117,28 +117,26 @@ app.post('/webhook', (req, res) => {
   
 
   function exploreFunds(agent) {
-    console.log('All parameters:', agent.parameters);
     const rawFundType = agent.parameters['fund-category'];
-    console.log('RAW fund-type:', rawFundType);
+    console.log('🔍 Exploring fund type:', rawFundType);
   
     const fundType = rawFundType?.toLowerCase?.() || '';
     const filePath = path.join(__dirname, 'fund&categorysample.json');
     const data = JSON.parse(fs.readFileSync(filePath));
   
-    const matchingCategory = data.find(
-      category => category.category.toLowerCase() === fundType
-    );
+    const match = data.find(cat => cat.category.toLowerCase() === fundType);
   
-    if (!matchingCategory || !matchingCategory.funds || matchingCategory.funds.length === 0) {
-      agent.add(`Sorry, I couldn't find any "${fundType}" funds at the moment.`);
+    if (!match || !match.funds || match.funds.length === 0) {
+      agent.add(`Sorry, I couldn't find any ${fundType} funds at the moment.`);
     } else {
       let response = `Here are some ${fundType} funds:\n`;
-      matchingCategory.funds.forEach(fund => {
+      match.funds.forEach(fund => {
         response += `• ${fund.fund_name} (ID: ${fund.fund_id})\n`;
       });
       agent.add(response);
     }
-  }  
+  }
+  
 
   function getLastTransaction(agent) {
     try {
@@ -206,7 +204,52 @@ app.post('/webhook', (req, res) => {
     
     // Set up context to expect number
     agent.context.set({ name: 'ask_mobile', lifespan: 1 });
-  }  
+  } 
+  
+  function getFundDetails(agent) {
+    const fundName = agent.parameters['fund-name'];
+  
+    if (!fundName) {
+      agent.add('Please tell me which fund you want details for.');
+      return;
+    }
+  
+    const filePath = path.join(__dirname, 'fund_details.json');
+    const data = JSON.parse(fs.readFileSync(filePath));
+    const fund = data.find(f => f.fund_name.toLowerCase() === fundName.toLowerCase());
+  
+    if (!fund) {
+      agent.add(`Sorry, I couldn't find details for ${fundName}.`);
+      return;
+    }
+  
+    let response = `📊 *${fund.fund_name}* Details:\n`;
+    for (const [key, value] of Object.entries(fund.breakdown)) {
+      response += `• ${key}: ${value}%\n`;
+    }
+    response += `\nMore info: ${fund.details_link}`;
+  
+    agent.add(response);
+  }
+
+  function investInFund(agent) {
+    const amount = agent.parameters['amount'];
+    const fundName = agent.parameters['fund-name'];
+  
+    if (!amount || isNaN(amount)) {
+      agent.add(`Please enter a valid amount.`);
+      return;
+    }
+  
+    if (amount > 50000) {
+      agent.add(`For this demo, investments are limited to ₹50,000.`);
+      return;
+    }
+  
+    agent.add(`✅ You've successfully invested ₹${amount} in ${fundName}.\n(This is a demo — no real money was used.)`);
+  }
+  
+  
   
   
 
@@ -218,6 +261,8 @@ app.post('/webhook', (req, res) => {
   intentMap.set('GetLastTransaction', getLastTransaction);
   intentMap.set('PortfolioValuation', portfolioValuation);
   intentMap.set('ChangeMobileNumber', changeMobileNumber);
+  intentMap.set('GetFundDetails', getFundDetails);
+  intentMap.set('InvestInFund', investInFund);
   agent.handleRequest(intentMap);
   console.log('✅ Response sent to Dialogflow');
 });
