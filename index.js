@@ -22,7 +22,20 @@ app.post('/webhook', (req, res) => {
 
   function getMobileNumber(agent) {
     const mobile = agent.parameters['mobile'];
-    agent.context.set({ name: 'got_mobile', lifespan: 5, parameters: { mobile } });
+    const digitsOnly = mobile.replace(/\D/g, '');
+  
+    // ✅ Check if it's a valid 10-digit number
+    if (!/^\d{10}$/.test(digitsOnly)) {
+      agent.add("That doesn't look like a valid mobile number. Please enter a 10-digit number.");
+      return;
+    }
+  
+    // ✅ Set context for future intents
+    agent.context.set({
+      name: 'got_mobile',
+      lifespan: 5,
+      parameters: { mobile: digitsOnly }
+    });
   
     const askContext = agent.context.get('ask_mobile');
     const intentToResume = askContext?.parameters?.resume_intent;
@@ -48,8 +61,9 @@ app.post('/webhook', (req, res) => {
       return investInFund(agent);
     }
   
-    agent.add(`Thanks! I've saved your number: ${mobile}. How can I help you next?`);
+    agent.add(`Thanks! I've saved your number: ${digitsOnly}. How can I help you next?`);
   }
+  
   
   
   function transactionHistory(agent) {
