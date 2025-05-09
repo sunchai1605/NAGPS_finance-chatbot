@@ -28,12 +28,14 @@ app.post('/webhook', (req, res) => {
     const intentToResume = askContext?.parameters?.resume_intent;
     const datePeriod = askContext?.parameters?.['date-period'];
   
-    if (intentToResume === 'PortfolioValuation') {
-      return portfolioValuation(agent);
-    } else if (intentToResume === 'TransactionHistory' && datePeriod?.startDate && datePeriod?.endDate) {
-      agent.parameters['date-period'] = datePeriod;
-      return transactionHistory(agent);
-    }
+    if (intentToResume === 'TransactionHistory' && datePeriod?.startDate) {
+        agent.parameters['date-period'] = datePeriod;
+        return transactionHistory(agent);
+      }
+      
+      if (intentToResume === 'PortfolioValuation') {
+        return portfolioValuation(agent);
+      }
   
     agent.add(`Thanks! I've saved your number: ${mobile}. How can I help you next?`);
   }
@@ -77,7 +79,7 @@ app.post('/webhook', (req, res) => {
         response += `• ${tx.date}: ₹${tx.amount} - ${tx.fund_name}\n`;
       });
       agent.add(response);
-      agent.add("Would you like to invest more in any of these funds?");
+      agent.add("Would you like to invest more in one of these, explore other funds, or exit?");
     }
   }
 
@@ -104,7 +106,7 @@ app.post('/webhook', (req, res) => {
   
     const total = userData.transactions.reduce((sum, tx) => sum + tx.amount, 0);
     agent.add(`💼 Your total portfolio valuation is ₹${total}.`);
-    agent.add("Let us know if you'd like to explore funds or invest further.");
+    agent.add(`Would you like to explore more funds, check your transaction history, or exit?`);
   }
   
 
@@ -169,7 +171,9 @@ app.post('/webhook', (req, res) => {
     }
 
     agent.add(`✅ Successfully simulated an investment of ₹${amount} in ${matched.fund_name}.`);
-    agent.add("Would you like to do anything else? You can explore funds or check transactions.");
+    agent.add("Investment successful! Would you like to check your portfolio or explore more funds?");
+    agent.add("Is there anything else you'd like to do? You can say 'portfolio', 'transactions', or 'no' to exit.");
+
   }
 
   function changeMobileNumber(agent) {
