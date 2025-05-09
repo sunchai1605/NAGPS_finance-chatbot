@@ -29,48 +29,66 @@ app.post('/webhook', (req, res) => {
     const datePeriod = askContext?.parameters?.['date-period'];
   
     if (intentToResume === 'TransactionHistory' && datePeriod?.startDate) {
-        agent.parameters['date-period'] = datePeriod;
-        return transactionHistory(agent);
-      }
-      
-      if (intentToResume === 'PortfolioValuation') {
-        return portfolioValuation(agent);
-      }
+      agent.parameters['date-period'] = datePeriod;
+      return transactionHistory(agent);
+    }
+  
+    if (intentToResume === 'PortfolioValuation') {
+      return portfolioValuation(agent);
+    }
+  
+    if (intentToResume === 'ExploreFunds') {
+      agent.parameters['fund-category'] = askContext?.parameters?.fund_category;
+      return exploreFunds(agent);
+    }
+  
+    if (intentToResume === 'InvestInFund') {
+      agent.parameters['fund-name'] = askContext?.parameters?.['fund-name'];
+      agent.parameters['amount'] = askContext?.parameters?.['amount'];
+      return investInFund(agent);
+    }
   
     agent.add(`Thanks! I've saved your number: ${mobile}. How can I help you next?`);
   }
   
-
+  
   function transactionHistory(agent) {
     const datePeriod = agent.parameters['date-period'];
     const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
-
+  
     if (!userMobile) {
-      agent.context.set({ name: 'ask_mobile', lifespan: 2, parameters: { 'date-period': datePeriod } });
+      agent.context.set({
+        name: 'ask_mobile',
+        lifespan: 2,
+        parameters: {
+          resume_intent: 'TransactionHistory',
+          'date-period': datePeriod
+        }
+      });
       agent.add("Could you please share your mobile number to continue?");
       return;
     }
-
+  
     if (!datePeriod?.startDate || !datePeriod?.endDate) {
       agent.add("Please provide the date range for the transactions.");
       return;
     }
-
+  
     const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'transactionhistorysample.json')));
     const userData = data.find(u => u.mobile === userMobile);
-
+  
     if (!userData) {
       agent.add("No account found for this mobile number.");
       return;
     }
-
+  
     const startDate = new Date(datePeriod.startDate);
     const endDate = new Date(datePeriod.endDate);
     const filtered = userData.transactions.filter(tx => {
       const txDate = new Date(tx.date);
       return txDate >= startDate && txDate <= endDate;
     });
-
+  
     if (filtered.length === 0) {
       agent.add("No transactions found in the given date range.");
     } else {
@@ -82,6 +100,7 @@ app.post('/webhook', (req, res) => {
       agent.add("Would you like to invest more in one of these, explore other funds, or exit?");
     }
   }
+  
 
   function portfolioValuation(agent) {
     const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
@@ -112,21 +131,38 @@ app.post('/webhook', (req, res) => {
 
   function exploreFunds(agent) {
     const type = agent.parameters['fund-category']?.toLowerCase();
-    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fund&categorysample.json')));
-    const match = data.find(f => f.category.toLowerCase() === type);
-
-    if (!match) {
-      agent.add(`Sorry, I couldn't find any "${type}" funds.`);
+    const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+  
+    if (!userMobile) {
+      agent.context.set({
+        name: 'ask_mobile',
+        lifespan: 2,
+        parameters: {
+          resume_intent: 'ExploreFunds',
+          fund_category: type
+        }
+      });
+      agent.add("Please share your mobile number before we explore funds.");
       return;
     }
-
+  
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fund&categorysample.json')));
+    const match = data.find(f => f.category.toLowerCase() === type);
+  
+    if (!match) {
+        agent.add(`Sorry, I couldn’t find details for "${fundName}". You can try another name or explore available funds first.`);
+      return;
+    }
+  
     let response = `Here are some ${type} funds:\n`;
     match.funds.forEach(f => {
       response += `• ${f.fund_name} (ID: ${f.fund_id})\n`;
     });
+  
     agent.add(response);
-    agent.add("Would you like to view fund details or invest in one?");
+    agent.add("Would you like details on any of these, or would you like to invest?");
   }
+  
 
   function getFundDetails(agent) {
     const fundName = agent.parameters['fund-name'];
@@ -147,34 +183,50 @@ app.post('/webhook', (req, res) => {
   }
 
   function investInFund(agent) {
+    const userMobile = agent.context.get('got_mobile')?.parameters?.mobile?.replace(/\D/g, '');
+  
     const amount = agent.parameters['amount'];
     const fundRaw = agent.parameters['fund-name'];
     const fundName = Array.isArray(fundRaw) ? fundRaw[0] : fundRaw;
     const normalizedFund = fundName?.trim()?.toLowerCase();
-
+  
+    if (!userMobile) {
+      agent.context.set({
+        name: 'ask_mobile',
+        lifespan: 2,
+        parameters: {
+          resume_intent: 'InvestInFund',
+          'fund-name': fundName,
+          'amount': amount
+        }
+      });
+      agent.add("Before we proceed with the investment, please provide your mobile number.");
+      return;
+    }
+  
     if (!normalizedFund || !amount) {
       agent.add("Please mention both the fund name and the amount you'd like to invest.");
       return;
     }
-
+  
     if (amount > 50000) {
       agent.add("For demo, investments above ₹50,000 require verification. Contact support.");
       return;
     }
-
+  
     const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fund_details.json')));
     const matched = data.find(f => f.fund_name.toLowerCase() === normalizedFund);
-
+  
     if (!matched) {
       agent.add(`Sorry, no fund found with name "${fundName}".`);
       return;
     }
-
+  
     agent.add(`✅ Successfully simulated an investment of ₹${amount} in ${matched.fund_name}.`);
     agent.add("Investment successful! Would you like to check your portfolio or explore more funds?");
     agent.add("Is there anything else you'd like to do? You can say 'portfolio', 'transactions', or 'no' to exit.");
-
   }
+  
 
   function changeMobileNumber(agent) {
     agent.context.set({ name: 'got_mobile', lifespan: 0 });
